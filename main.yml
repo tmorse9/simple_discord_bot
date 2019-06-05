@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: stop service
+      shell: echo "hello"
+    - name: check if files exist
+      stat:
+        path: /opt/discord_bot
+      register: existence_check
+    - name: remove if files exist
+      file:
+        path: /opt/discord_bot
+        state: absent
+      when: existence_check.stat.exists == True
+    - name: create new directory
+      file:
+        path: /opt/discord_bot
+        state: directory
+    - name: copy files
+      template:
+        src: bots.js.j2
+        dest: /opt/discord_bot/bots.js
+        owner: root 
+        group: root
+        mode: '0755'
+    - name: copy files
+      template: 
+        src: package.json.j2
+        dest: /opt/discord_bot/package.json
+        owner: root
+        group: root
+        mode: '0755'
+    - name: copy files
+      template:
+        src: auth.json.j2
+        dest: /opt/discord_bot/auth.json
+        owner: root
+        group: root
+        mode: '0755'
+    - name: install node.js
+      apt:
+        name: nodejs
+        state: present
+    - name: install npm
+      apt:
+        name: npm
+        state: present
+    - name: install packages for nodejs
+      shell: npm install
+      args:
+        chdir: /opt/discord_bot
+    - name: install packages for nodejs
+      shell: nohup node bots.js &
+      args:
+        chdir: /opt/discord_bot
